@@ -1,0 +1,32 @@
+html
+script
+  var app = require('express'); 
+  app.ex
+body
+  h1= title
+  p Welcome to #{title}
+  form(name="input", action= "add", method="post")
+    fieldset
+      key Username
+         br
+         input(type="text",id="user", name="user")
+      br
+      key Password
+        br
+        input(type="password",id="pswd", name="pswd")
+      br
+      key IP
+         br
+         input(type="text",id="ip", name="ip")
+      br
+      input(type="submit", value="Submit")
+  fieldset
+    table
+      tr: th VMs
+        tbody
+          - for(vm in vmlist) {
+          tr
+            td= vmlist[vm].title
+            td= vmlist[vm].ip
+        - }
+            
