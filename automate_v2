@@ -1,0 +1,80 @@
+import subprocess
+import sys
+import os
+import time
+from neutronclient.neutron import client
+from novaclient.client import Client
+
+USERNAME=sys.argv[1]
+PASSWORD=sys.argv[2]
+TENANT='admin'
+VERSION='2.0'
+AUTH_URL='http://'+sys.argv[3]+':5000/v2.0'
+
+
+nova = Client('2', USERNAME, PASSWORD, TENANT, AUTH_URL)
+neutron = client.Client(VERSION, username=USERNAME, password=PASSWORD, tenant_name=TENANT, auth_url=AUTH_URL)
+neutron.format = 'json'
+
+servers=nova.servers.list()
+netlist=nova.networks.list()
+
+#Making changes in nova.conf for compute to use neutron for networking
+x1 = open('/home/hassaan/novaconf.txt').read().splitlines()
+x2 = open('/etc/nova/nova.conf').read().splitlines()
+del x2[0:9]
+x = x1+x2
+f=open('/etc/nova/nova.conf','w')
+for ele in x:
+    f.write(ele+'\n')
+ 
+f.close()
+#print "nova.conf file modded"
+os.system("kill -9 `ps aux | grep -v grep | grep nova-network | awk '{print $2}'`")
+os.system('screen -S stack -p n-net -X stuff "/usr/local/bin/nova-network --config-file /etc/nova/nova.conf\n"')
+
+
+
+os.system("kill -9 `ps aux | grep -v grep | grep nova-api | awk '{print $2}'`")
+os.system('screen -S stack -p n-api -X stuff "/usr/local/bin/nova-api\n"')
+
+os.system("kill -9 `ps aux | grep -v grep | grep nova-compute | awk '{print $2}'`")
+os.system("screen -S stack -p n-api -X stuff sg libvirtd '/usr/local/bin/nova-compute --config-file /etc/nova/nova.conf'")
+#p1 = subprocess.Popen(['/home/hassaan/devstack/./unstack.sh'], stdout=subprocess.PIPE)
+#p1.communicate()[0]
+#cmd = "/home/hassaan/devstack/./rejoin-stack.sh; bash"
+#p2 = subprocess.Popen(['xterm','-e',cmd], stdout=subprocess.PIPE)
+#time.sleep(10)
+#p2.communicate()[0]
+#print "Services restarted successfully, beginning migration"
+
+#cloning networks in neutron and then creating valid subnet
+for net in reversed(netlist):
+    temp_ip = str(net.cidr)
+    temp_ip = temp_ip.split("/")
+    netw=neutron.create_network( { 'network' : { 'name' : net.label, 'admin_state_up': True } } )
+    net_dict = netw['network']
+    network_id = net_dict['id']
+#    print net.cidr
+#    print('Network %s created' % network_id)
+    body_create_subnet = {'subnets': [{'ip_version': 4, 'network_id': network_id,'cidr': net.cidr}]}
+    subnet = neutron.create_subnet(body=body_create_subnet)
+#    print('Created subnet %s' % subnet)
+    for serv in reversed(servers):
+#        print('In block')
+#        print net.label   
+        try:   
+            q =str(serv.networks[net.label])
+            found=True
+#            print('found')
+        except:
+            found=False
+#        print found
+        if found==True:
+#            print('In subnet loop')
+            q = q.split("'")
+            snet = q[1]
+        body_value = {"port":{"admin_state_up":True,"network_id":network_id}}
+        response = neutron.create_port(body=body_value)
+        serv.interface_attach(response["port"]["id"],None,None)           
+#        print('FOUND AND SUBNET CREATED\n')
