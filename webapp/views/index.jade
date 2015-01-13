@@ -30,3 +30,13 @@ body
             td= vmlist[vm].ip
         - }
             
+  form(name="input1", action= "migrate", method="post")
+    input(type="submit", value="MIGRATE")
+  fieldset
+    table
+      tr: th Migrated
+        tbody
+          - for(mg in msg){
+          tr
+            td = msg[mg]
+        - }
