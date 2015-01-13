@@ -39,7 +39,9 @@ os.system("kill -9 `ps aux | grep -v grep | grep nova-api | awk '{print $2}'`")
 os.system('screen -S stack -p n-api -X stuff "/usr/local/bin/nova-api\n"')
 
 os.system("kill -9 `ps aux | grep -v grep | grep nova-compute | awk '{print $2}'`")
-os.system("screen -S stack -p n-api -X stuff sg libvirtd '/usr/local/bin/nova-compute --config-file /etc/nova/nova.conf'")
+cmd ="screen -S stack -p n-cpu -X stuff "+ '"sg libvirtd '+"'/usr/local/bin/nova-compute --config-file /etc/nova/nova.conf'"+'\n"'
+os.system(cmd)
+time.sleep(10)
 #p1 = subprocess.Popen(['/home/hassaan/devstack/./unstack.sh'], stdout=subprocess.PIPE)
 #p1.communicate()[0]
 #cmd = "/home/hassaan/devstack/./rejoin-stack.sh; bash"
@@ -55,26 +57,18 @@ for net in reversed(netlist):
     netw=neutron.create_network( { 'network' : { 'name' : net.label, 'admin_state_up': True } } )
     net_dict = netw['network']
     network_id = net_dict['id']
-#    print net.cidr
-#    print('Network %s created' % network_id)
     body_create_subnet = {'subnets': [{'ip_version': 4, 'network_id': network_id,'cidr': net.cidr}]}
     subnet = neutron.create_subnet(body=body_create_subnet)
-#    print('Created subnet %s' % subnet)
     for serv in reversed(servers):
-#        print('In block')
-#        print net.label   
-        try:   
-            q =str(serv.networks[net.label])
-            found=True
-#            print('found')
-        except:
-            found=False
-#        print found
-        if found==True:
-#            print('In subnet loop')
-            q = q.split("'")
+	try:	
+	    q =str(serv.networks[net.label])
+	    found=True
+	    
+	except:
+	    found=False
+	if found==True:
+    	    q = q.split("'")
             snet = q[1]
-        body_value = {"port":{"admin_state_up":True,"network_id":network_id}}
-        response = neutron.create_port(body=body_value)
-        serv.interface_attach(response["port"]["id"],None,None)           
-#        print('FOUND AND SUBNET CREATED\n')
+	    body_value = {"port":{"admin_state_up":True,"network_id":network_id}}
+	    response = neutron.create_port(body=body_value)
+	    serv.interface_attach(response["port"]["id"],None,None)
