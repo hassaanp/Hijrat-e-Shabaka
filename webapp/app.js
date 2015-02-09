@@ -5,11 +5,15 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var exec = require('child_process').exec;
+var options = {
+  mode: 'json',
+  pythonOptions: ['-u'],
+  scriptPath: '/home/hassaan/'
+};
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var results1;
-var msg;
+
 var app = express();
 var name;
 var password;
@@ -28,7 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/users', users);
-app.post('/add',function(req,res,next){
+app.post('/add',function(req,res,next) {
   name = req.body.user;
   password = req.body.pswd;
   ip = req.body.ip;
@@ -45,53 +49,27 @@ app.post('/add',function(req,res,next){
     vmlist = results1;
     params={
     "vmlist": vmlist};
-     res.render('index.jade', params, function(err, html) {
+     res.render('add.jade', params, function(err, html) {
          res.send(200, html);
      });
   });
 
-/*var child;
-
-child = exec('/home/hassaan/devstack/./unstack.sh',
-  function (error, stdout, stderr) {
-    console.log('stdout: ' + stdout);
-    console.log('stderr: ' + stderr);
-    if (error !== null) {
-      console.log('exec error: ' + error);
-    }
-});
-setTimeout(hello, 20000);*/
-  
 });
 app.post('/migrate',function(req,res,next){
-  var options = {
-  mode: 'json',
-  pythonOptions: ['-u'],
-  scriptPath: '/home/hassaan/',
-  args: [name, password, ip]
-};
-  PythonShell.run('automate_v2.py',options, function (err, results){
-      if (err) throw err;
-      console.log('results: %j', results);
-      msg = "DONE!"
-      params={
-      "msg": msg};
-      res.render('index.jade', params, function(err, html) {
-         res.send(200, html);
+	var list = req.body.name;
+	console.log(list);
+	var options = {
+	pythonOptions: ['-u'],
+	scriptPath: '/home/hassaan/',
+	args: [name,password,ip,list]
+	};
+	PythonShell.run('automate_v3.py',options, function (err, results){
+          if (err) throw err;
+          res.render('index.jade', params, function(err, html) {
+             res.send(200, html);
+         });
      });
-  });
 });
-/*function hello(){
-  var child;
-  child = exec('xterm -e "/home/hassaan/devstack/./rejoin-stack.sh; bash"',
-    function (error, stdout, stderr) {
-      console.log('stdout: ' + stdout);
-      console.log('stderr: ' + stderr);
-      if (error !== null) {
-        console.log('exec error: ' + error);
-    }
-  });
-} */
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
