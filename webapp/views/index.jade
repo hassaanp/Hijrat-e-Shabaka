@@ -1,42 +1,27 @@
-html
-script
-  var app = require('express'); 
-  app.ex
-body
-  h1= title
-  p Welcome to #{title}
-  form(name="input", action= "add", method="post")
-    fieldset
+extends layout
+
+block content
+  h1 Hijrat-e-Shabaka
+  h2 Nova-Neutron Migration
+  div(id="login", class = "test")
+    h3 Please enter credentials below
+    br
+    form(name="input", action= "add", method="post")
       key Username
-         br
-         input(type="text",id="user", name="user")
+      br  
+      input(type="text",id="user", name="user")
+      br
+      key Tenant
+      br  
+      input(type="text",id="tenant", name="tenant")
       br
       key Password
-        br
-        input(type="password",id="pswd", name="pswd")
+      br  
+      input(type="password",id="pswd", name="pswd")
       br
       key IP
-         br
-         input(type="text",id="ip", name="ip")
       br
+      input(type="text",id="ip", name="ip")
+      br  
       input(type="submit", value="Submit")
-  fieldset
-    table
-      tr: th VMs
-        tbody
-          - for(vm in vmlist) {
-          tr
-            td= vmlist[vm].title
-            td= vmlist[vm].ip
-        - }
-            
-  form(name="input1", action= "migrate", method="post")
-    input(type="submit", value="MIGRATE")
-  fieldset
-    table
-      tr: th Migrated
-        tbody
-          - for(mg in msg){
-          tr
-            td = msg[mg]
-        - }
+      br
