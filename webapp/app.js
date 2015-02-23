@@ -16,6 +16,7 @@ var users = require('./routes/users');
 
 var app = express();
 var name;
+var tenant;
 var password;
 var ip;
 // view engine setup
@@ -35,23 +36,35 @@ app.use('/users', users);
 app.post('/add',function(req,res,next) {
   name = req.body.user;
   password = req.body.pswd;
+  tenant = req.body.tenant;
   ip = req.body.ip;
   var options = {
   mode: 'json',
   pythonOptions: ['-u'],
   scriptPath: '/home/hassaan/',
-  args: [name, password, ip]
+  args: [name, password, tenant, ip]
   };
+  results=[]
   PythonShell.run('get_vm_list.py',options, function (err, results){
-      if (err) throw err;
-      console.log('results: %j', results);
-	  results1 = results
-    vmlist = results1;
-    params={
-    "vmlist": vmlist};
-     res.render('add.jade', params, function(err, html) {
-         res.send(200, html);
-     });
+        if (err) throw err;
+        console.log('results: %j', results);
+	stringval='{"fail":"failed!"}';
+	stringval1='{"fail":"wrongapi!"}';
+	if(results==null){
+		res.send("ERROR:No VMs to Migrate!");	
+	}
+	else if(JSON.stringify(results[results.length -1])==stringval)
+	{res.send("Incorrect credentials");}
+	else if(JSON.stringify(results[results.length -1])==stringval1)
+	{res.send("Incorrect networking API please switch to nova-net and take note which VMs migrated!");}
+	else{
+    	vmlist = results;
+    	params={
+    	"vmlist": vmlist};
+     	res.render('add.jade', params, function(err, html) {
+        	 res.send(200, html);
+     	});
+	}
   });
 
 });
@@ -61,7 +74,7 @@ app.post('/migrate',function(req,res,next){
 	var options = {
 	pythonOptions: ['-u'],
 	scriptPath: '/home/hassaan/',
-	args: [name,password,ip,list]
+	args: [name,password,tenant,ip,list]
 	};
 	PythonShell.run('automate_v3.py',options, function (err, results){
           if (err) throw err;
