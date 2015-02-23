@@ -1,1 +1,7 @@
-
+[DEFAULT]
+vif_plugging_timeout = 300
+vif_plugging_is_fatal = True
+linuxnet_interface_driver = 
+security_group_api = neutron
+network_api_class = nova.network.neutronv2.api.API
+firewall_driver = nova.virt.firewall.NoopFirewallDriver
