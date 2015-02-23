@@ -28,6 +28,9 @@ $(document).ready(function(){
 	}); 
 	$('#button').click(function(){
 		$('#button').fadeTo('fast',1);
-		$.post("/migrate", { "name": document.getElementsByName("mig")[0].innerHTML});
+		$.post("/migrate", { "name": document.getElementsByName("mig")[0].innerHTML},function(data,textStatus){
+			alert(textStatus);
+			window.location.href = "done";
+		});
 	});   
 });
