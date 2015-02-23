@@ -8,9 +8,9 @@ from novaclient.client import Client
 
 USERNAME=sys.argv[1]
 PASSWORD=sys.argv[2]
-TENANT='admin'
+TENANT=sys.argv[3]
 VERSION='2.0'
-AUTH_URL='http://'+sys.argv[3]+':5000/v2.0'
+AUTH_URL='http://'+sys.argv[4]+':5000/v2.0'
 
 
 nova = Client('2', USERNAME, PASSWORD, TENANT, AUTH_URL)
@@ -21,7 +21,7 @@ servers=nova.servers.list()
 netlist=nova.networks.list()
 
 
-selectedlist=sys.argv[4]
+selectedlist=sys.argv[5]
 selectedlist=selectedlist.replace('<li name=\"mig1\" id=\"mig1\">','')
 selectedlist=selectedlist.replace('</li>',' ')
 selectedlist1 = selectedlist.split(' ')
@@ -86,15 +86,13 @@ for net in reversed(netlist):
             ip = ip.split('"')[3]
 	    body_value = {"port":{"admin_state_up":True,"network_id":network_id,"fixed_ips": [{"ip_address": ip}]}}
             try:
-	        response = neutron.create_port(body=body_value)
+                response = neutron.create_port(body=body_value)
+                serv.interface_detach(net.id)
                 serv.interface_attach(response["port"]["id"],None,None)
+                serv.reboot(reboot_type='HARD')
             except:
                 body_value = {"port":{"admin_state_up":True,"network_id":network_id}}
-                for port in ports.values():
-                    for p in port:
-                        if ip==p['fixed_ips'][0]['ip_address']:
-                            serv.interface_attach(p["port"]["id"],None,None)
-                            break
-                        
-#            response = neutron.create_port(body=body_value)
-#	    serv.interface_attach(response["port"]["id"],None,None)
+                response = neutron.create_port(body=body_value)
+                serv.interface_detach(net.id)
+                serv.interface_attach(response["port"]["id"],None,None)
+                serv.reboot(reboot_type='HARD')
